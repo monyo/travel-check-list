@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1a6b5a">
+<title>峇里島出發清單</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f0f4f2;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #1a6b5a, #2d9b7f);
+    color: white;
+    padding: 20px 16px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .header-title { font-size: 20px; font-weight: 700; }
+  .header-sub { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+
+  .countdown {
+    text-align: right;
+  }
+  .countdown-num {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .countdown-label { font-size: 11px; opacity: 0.8; }
+
+  .overall-progress {
+    background: rgba(255,255,255,0.2);
+    border-radius: 6px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .overall-progress-bar {
+    height: 100%;
+    background: #a8edcc;
+    border-radius: 6px;
+    transition: width 0.4s ease;
+  }
+  .overall-label {
+    font-size: 12px;
+    opacity: 0.85;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  main { padding: 12px 12px 80px; max-width: 600px; margin: 0 auto; }
+
+  .section {
+    background: white;
+    border-radius: 14px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px 10px;
+    cursor: pointer;
+    user-select: none;
+    gap: 10px;
+  }
+
+  .section-icon { font-size: 20px; flex-shrink: 0; }
+
+  .section-info { flex: 1; min-width: 0; }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  .section-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 5px;
+  }
+
+  .section-bar-wrap {
+    flex: 1;
+    background: #e8f0ec;
+    border-radius: 4px;
+    height: 5px;
+    overflow: hidden;
+  }
+
+  .section-bar {
+    height: 100%;
+    border-radius: 4px;
+    background: #2d9b7f;
+    transition: width 0.4s ease;
+  }
+
+  .section-count {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+  }
+
+  .section-chevron {
+    font-size: 12px;
+    color: #999;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .section.collapsed .section-chevron { transform: rotate(-90deg); }
+
+  .items { border-top: 1px solid #f0f0f0; }
+  .section.collapsed .items { display: none; }
+
+  .item {
+    border-bottom: 1px solid #f5f5f5;
+  }
+  .item:last-child { border-bottom: none; }
+
+  .item-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 16px;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .item-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+    transition: all 0.15s;
+  }
+
+  .item.done .item-check {
+    background: #2d9b7f;
+    border-color: #2d9b7f;
+  }
+
+  .item.done .item-check::after {
+    content: "✓";
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .item-content { flex: 1; min-width: 0; }
+
+  .item-title {
+    font-size: 14px;
+    line-height: 1.4;
+    color: #1a1a1a;
+    transition: color 0.15s;
+  }
+  .item.done .item-title {
+    color: #999;
+    text-decoration: line-through;
+  }
+
+  .item-note {
+    font-size: 12px;
+    color: #888;
+    margin-top: 3px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+
+  .item-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .btn-memo {
+    background: none;
+    border: none;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    color: #aaa;
+    line-height: 1;
+  }
+  .btn-memo:hover { background: #f0f0f0; }
+  .btn-memo.has-memo { color: #2d9b7f; }
+
+  .memo-box {
+    display: none;
+    padding: 0 16px 12px 50px;
+  }
+  .memo-box.open { display: block; }
+
+  .memo-textarea {
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 60px;
+    background: #fafafa;
+    color: #333;
+    outline: none;
+  }
+  .memo-textarea:focus {
+    border-color: #2d9b7f;
+    background: white;
+  }
+
+  .urgent-badge {
+    display: inline-block;
+    background: #ff5a36;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-left: 5px;
+    vertical-align: middle;
+  }
+
+  .reset-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 16px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 50px;
+    padding: 10px 18px;
+    font-size: 13px;
+    color: #666;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+  .reset-btn:hover { background: #f5f5f5; }
+
+  .all-done-banner {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #1a6b5a, #2d9b7f);
+    color: white;
+    border-radius: 14px;
+    margin-bottom: 14px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div>
+      <div class="header-title">🌴 峇里島出發清單</div>
+      <div class="header-sub" id="departureDate"></div>
+    </div>
+    <div class="countdown">
+      <div class="countdown-num" id="countdownNum">—</div>
+      <div class="countdown-label">天後出發</div>
+    </div>
+  </div>
+  <div class="overall-label">
+    <span>整體進度</span>
+    <span id="overallText">0 / 0</span>
+  </div>
+  <div class="overall-progress">
+    <div class="overall-progress-bar" id="overallBar" style="width:0%"></div>
+  </div>
+</header>
+
+<main>
+  <div class="all-done-banner" id="allDoneBanner">🎉 全部完成！準備出發囉！</div>
+  <div id="sections"></div>
+</main>
+
+<button class="reset-btn" onclick="confirmReset()">↺ 重置清單</button>
+
+<script>
+const DEPARTURE = new Date('2026-04-25');
+
+const DATA = [
+  {
+    id: 'urgent',
+    icon: '🚨',
+    title: '先做的 4 件事',
+    items: [
+      { id: 'passport', text: '確認護照效期', note: '至少須有 6 個月以上效期（印尼 e-Visa 基本要求）', urgent: true },
+      { id: 'visa', text: '查簽證方式', note: 'e-VOA / e-Visa 或其他入境方式，依護照國籍不同，建議至印尼官方系統查詢', urgent: true },
+      { id: 'balitax', text: '繳峇里島外國旅客稅', note: '每人 Rp150,000，透過 Love Bali 官方平台處理', urgent: true },
+      { id: 'ecd', text: '填印尼電子海關申報 e-CD', note: '出發前至印尼海關官方入口填寫', urgent: true },
+    ]
+  },
+  {
+    id: 'prep',
+    icon: '📋',
+    title: '三週內建議準備',
+    items: [
+      { id: 'flight', text: '機票、住宿、接送', note: '第一晚住宿和機場到飯店的交通先訂好，晚班機到達尤其重要' },
+      { id: 'insurance', text: '旅遊保險', note: '至少保醫療、突發疾病、班機延誤、行李遺失；有水上活動記得確認是否涵蓋' },
+      { id: 'money', text: '信用卡 + 現金（印尼盾）', note: '大觀光區可刷卡，小店/路邊攤/司機常用現金；備好至少一張備用卡' },
+      { id: 'network', text: '網路方案', note: '漫遊 / eSIM / 當地 SIM 卡三選一；機場有 Wi-Fi 可撐到安裝完成' },
+      { id: 'plug', text: '插頭與充電確認', note: '印尼 230V / 50Hz，多數亞洲裝置可直接用；插頭規格不同則帶轉接頭' },
+    ]
+  },
+  {
+    id: 'health',
+    icon: '🏥',
+    title: '健康與安全',
+    items: [
+      { id: 'mosquito', text: '防蚊準備', note: '印尼屬蚊媒疾病風險地區（CDC 建議）；帶防蚊液、薄長袖' },
+      { id: 'medicine', text: '常備藥', note: '腸胃藥、止痛藥、暈車暈船藥、OK 繃、過敏藥' },
+      { id: 'vaccine', text: '疫苗確認', note: '確認常規疫苗已更新；依行程型態考慮是否需其他旅遊疫苗（可參考 CDC 印尼旅遊建議）' },
+      { id: 'law', text: '了解當地法律與文化', note: '印尼毒品法規極嚴；寺廟、村落注意穿著與禮儀' },
+    ]
+  },
+  {
+    id: 'packing',
+    icon: '🎒',
+    title: '行李清單',
+    items: [
+      { id: 'clothes', text: '輕薄夏季衣物、泳衣、拖鞋', note: '' },
+      { id: 'sun', text: '防曬三件組', note: '帽子、太陽眼鏡、防曬乳' },
+      { id: 'bug2', text: '防蚊液 + 常備藥', note: '' },
+      { id: 'waterproof', text: '防水袋、快乾毛巾', note: '海邊活動必備' },
+      { id: 'shoes', text: '好走涼鞋或運動鞋', note: '' },
+      { id: 'jacket', text: '薄外套', note: '冷氣車、飛機上備用' },
+    ]
+  },
+  {
+    id: 'dontforget',
+    icon: '⚠️',
+    title: '最容易漏掉的 5 件事',
+    items: [
+      { id: 'chk1', text: '護照效期不夠', note: '再次確認至少 6 個月以上' },
+      { id: 'chk2', text: '沒先確認簽證資格', note: '依護照國籍不同，可用的入境方式可能不同' },
+      { id: 'chk3', text: '忘了付 Bali Tourist Levy', note: 'Love Bali 官方平台，Rp150,000 / 人' },
+      { id: 'chk4', text: '沒填 e-CD 海關申報', note: '印尼海關官方入口，出發前完成' },
+      { id: 'chk5', text: '只帶一張卡、沒備用現金', note: '至少兩種支付方式備用' },
+    ]
+  }
+];
+
+// State
+let state = {};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('bali-checklist-v2');
+    if (saved) state = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function saveState() {
+  localStorage.setItem('bali-checklist-v2', JSON.stringify(state));
+}
+
+function getItem(sectionId, itemId) {
+  const key = `${sectionId}__${itemId}`;
+  return state[key] || { done: false, memo: '', memoOpen: false };
+}
+
+function setItem(sectionId, itemId, patch) {
+  const key = `${sectionId}__${itemId}`;
+  state[key] = { ...getItem(sectionId, itemId), ...patch };
+  saveState();
+}
+
+function getSectionCollapsed(sectionId) {
+  return state[`__collapsed__${sectionId}`] || false;
+}
+function setSectionCollapsed(sectionId, val) {
+  state[`__collapsed__${sectionId}`] = val;
+  saveState();
+}
+
+function updateCountdown() {
+  const now = new Date();
+  const diff = Math.ceil((DEPARTURE - now) / (1000 * 60 * 60 * 24));
+  document.getElementById('countdownNum').textContent = diff > 0 ? diff : 0;
+  document.getElementById('departureDate').textContent =
+    `出發日：${DEPARTURE.getFullYear()}/${DEPARTURE.getMonth()+1}/${DEPARTURE.getDate()}`;
+}
+
+function updateOverall() {
+  let total = 0, done = 0;
+  DATA.forEach(sec => {
+    sec.items.forEach(item => {
+      total++;
+      if (getItem(sec.id, item.id).done) done++;
+    });
+  });
+  document.getElementById('overallText').textContent = `${done} / ${total}`;
+  document.getElementById('overallBar').style.width = total ? `${(done/total*100).toFixed(1)}%` : '0%';
+  document.getElementById('allDoneBanner').style.display = (done === total && total > 0) ? 'block' : 'none';
+}
+
+function updateSection(sectionId) {
+  const sec = DATA.find(s => s.id === sectionId);
+  const total = sec.items.length;
+  const done = sec.items.filter(i => getItem(sectionId, i.id).done).length;
+  const bar = document.getElementById(`bar-${sectionId}`);
+  const count = document.getElementById(`count-${sectionId}`);
+  if (bar) bar.style.width = `${(done/total*100).toFixed(1)}%`;
+  if (count) count.textContent = `${done}/${total}`;
+}
+
+function toggleItem(sectionId, itemId) {
+  const cur = getItem(sectionId, itemId);
+  setItem(sectionId, itemId, { done: !cur.done });
+  renderItem(sectionId, itemId);
+  updateSection(sectionId);
+  updateOverall();
+}
+
+function toggleMemo(sectionId, itemId) {
+  const cur = getItem(sectionId, itemId);
+  setItem(sectionId, itemId, { memoOpen: !cur.memoOpen });
+  renderItem(sectionId, itemId);
+}
+
+function saveMemo(sectionId, itemId, val) {
+  setItem(sectionId, itemId, { memo: val });
+  // update button color
+  const btn = document.getElementById(`memobtn-${sectionId}-${itemId}`);
+  if (btn) btn.className = 'btn-memo' + (val ? ' has-memo' : '');
+}
+
+function renderItem(sectionId, itemId) {
+  const el = document.getElementById(`item-${sectionId}-${itemId}`);
+  if (!el) return;
+  const data = DATA.find(s => s.id === sectionId).items.find(i => i.id === itemId);
+  const st = getItem(sectionId, itemId);
+
+  el.className = 'item' + (st.done ? ' done' : '');
+
+  const noteEl = el.querySelector('.item-note');
+  if (noteEl) noteEl.textContent = data.note || '';
+
+  const memoBox = el.querySelector('.memo-box');
+  if (memoBox) memoBox.className = 'memo-box' + (st.memoOpen ? ' open' : '');
+
+  const ta = el.querySelector('.memo-textarea');
+  if (ta && document.activeElement !== ta) ta.value = st.memo || '';
+
+  const btn = el.querySelector('.btn-memo');
+  if (btn) btn.className = 'btn-memo' + (st.memo ? ' has-memo' : '');
+}
+
+function toggleSection(sectionId) {
+  const el = document.getElementById(`section-${sectionId}`);
+  const collapsed = !getSectionCollapsed(sectionId);
+  setSectionCollapsed(sectionId, collapsed);
+  if (collapsed) el.classList.add('collapsed');
+  else el.classList.remove('collapsed');
+}
+
+function buildHTML() {
+  const container = document.getElementById('sections');
+  container.innerHTML = '';
+
+  DATA.forEach(sec => {
+    const collapsed = getSectionCollapsed(sec.id);
+    const total = sec.items.length;
+    const done = sec.items.filter(i => getItem(sec.id, i.id).done).length;
+    const pct = (done/total*100).toFixed(1);
+
+    const secEl = document.createElement('div');
+    secEl.className = 'section' + (collapsed ? ' collapsed' : '');
+    secEl.id = `section-${sec.id}`;
+
+    secEl.innerHTML = `
+      <div class="section-header" onclick="toggleSection('${sec.id}')">
+        <span class="section-icon">${sec.icon}</span>
+        <div class="section-info">
+          <div class="section-title">${sec.title}</div>
+          <div class="section-progress-row">
+            <div class="section-bar-wrap">
+              <div class="section-bar" id="bar-${sec.id}" style="width:${pct}%"></div>
+            </div>
+            <span class="section-count" id="count-${sec.id}">${done}/${total}</span>
+          </div>
+        </div>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="items" id="items-${sec.id}"></div>
+    `;
+
+    container.appendChild(secEl);
+
+    const itemsEl = secEl.querySelector('.items');
+    sec.items.forEach(item => {
+      const st = getItem(sec.id, item.id);
+      const itemEl = document.createElement('div');
+      itemEl.className = 'item' + (st.done ? ' done' : '');
+      itemEl.id = `item-${sec.id}-${item.id}`;
+
+      itemEl.innerHTML = `
+        <div class="item-row" onclick="toggleItem('${sec.id}','${item.id}')">
+          <div class="item-check"></div>
+          <div class="item-content">
+            <div class="item-title">${item.text}${item.urgent ? '<span class="urgent-badge">立即辦</span>' : ''}</div>
+            ${item.note ? `<div class="item-note">${item.note}</div>` : ''}
+          </div>
+          <div class="item-actions" onclick="event.stopPropagation()">
+            <button class="btn-memo${st.memo ? ' has-memo' : ''}" id="memobtn-${sec.id}-${item.id}"
+              onclick="toggleMemo('${sec.id}','${item.id}')" title="備忘">📝</button>
+          </div>
+        </div>
+        <div class="memo-box${st.memoOpen ? ' open' : ''}">
+          <textarea class="memo-textarea" placeholder="備忘…"
+            oninput="saveMemo('${sec.id}','${item.id}',this.value)"
+          >${st.memo || ''}</textarea>
+        </div>
+      `;
+
+      itemsEl.appendChild(itemEl);
+    });
+  });
+}
+
+function confirmReset() {
+  if (confirm('確定要重置所有勾選狀態和備忘嗎？')) {
+    localStorage.removeItem('bali-checklist-v2');
+    state = {};
+    buildHTML();
+    updateOverall();
+  }
+}
+
+loadState();
+buildHTML();
+updateCountdown();
+updateOverall();
+</script>
+</body>
+</html>
